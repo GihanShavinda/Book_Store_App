@@ -53,7 +53,7 @@ try {
 
     const token = generateToken(user._id);
 
-    res.status(201).json({token,
+    res.status(200).json({token,
         user: {
             id: user._id,
             username: user.username,
@@ -75,23 +75,34 @@ router.post('/login', async(req, res) => {
         if (!email || !password) {
             return res.status(400).json({message: "Please fill all fields"});
         }
+
+        // check if user exists
         const user = await User.findOne({email});
         if (!user) {
             return res.status(400).json({message: "Invalid credentials"});
         }
 
-        const isMatch = await user.matchPassword(password);
-        if (!isMatch) {
+        // check if password matches
+        const isPasswordCorrect = await user.comparePassword(password);
+        if (!isPasswordCorrect) {
             return res.status(400).json({message: "Invalid credentials"});
         }
-
+         
+        // generate token
         const token = generateToken(user._id);
 
-        res.json({token});
+        res.status(200).json({token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                profileImage: user.profileImage,
+            }
+        });
 
     } catch (error) {
-        console.log(error);
-        res.status(500).json({message: "Server error"});
+        console.log("Error in login route",error);
+        res.status(500).json({message: "Internal server error"});
     }
   });
 
